@@ -22,14 +22,12 @@ abstract class OfficialYouTubePlayerModel :
 
     override fun bind(holder: Holder) {
         super.bind(holder)
-        holder.binding.playerFragment.id = View.generateViewId()
         disposable?.dispose()
         disposable = holder.binding.thumbnail.load(videoId.getVideoThumbnail())
     }
 
     override fun unbind(holder: Holder) {
         super.unbind(holder)
-        holder.binding.playerFragment.id = R.id.player_fragment
         disposable?.dispose()
         disposable = null
     }

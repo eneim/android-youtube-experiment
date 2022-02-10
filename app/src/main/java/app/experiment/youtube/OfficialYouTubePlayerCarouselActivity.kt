@@ -12,7 +12,6 @@ import com.airbnb.epoxy.Carousel
 import com.airbnb.epoxy.EpoxyVisibilityTracker
 import com.airbnb.epoxy.VisibilityState
 import com.google.android.youtube.player.OfficialYouTubePlayerManager
-import com.google.android.youtube.player.YouTubePlayer
 
 class OfficialYouTubePlayerCarouselActivity : CommonYouTubeActivity() {
 
@@ -36,7 +35,7 @@ class OfficialYouTubePlayerCarouselActivity : CommonYouTubeActivity() {
             override fun buildSnapHelper(context: Context?): SnapHelper = PagerSnapHelper()
         })
 
-        val playerManager = OfficialYouTubePlayerManager(supportFragmentManager)
+        val playerManager = OfficialYouTubePlayerManager()
 
         binding.videosOfficial.layoutManager =
             LinearLayoutManager(this, RecyclerView.HORIZONTAL, false)
@@ -50,14 +49,13 @@ class OfficialYouTubePlayerCarouselActivity : CommonYouTubeActivity() {
                         if (visibilityState == VisibilityState.FULL_IMPRESSION_VISIBLE) {
                             view.binding.playerFragment.isVisible = true
                             view.binding.thumbnail.isVisible = false
-                            playerManager.open(
-                                id = view.binding.playerFragment.id,
+                            playerManager.play(
+                                container = view.binding.playerFragment,
                                 videoId = videoId,
                                 autoStart = true,
-                                playerStyle = YouTubePlayer.PlayerStyle.CHROMELESS,
                             )
                         } else {
-                            playerManager.close(view.binding.playerFragment.id)
+                            playerManager.pause(view.binding.playerFragment)
                             view.binding.thumbnail.isVisible = true
                             view.binding.playerFragment.isVisible = false
                         }
