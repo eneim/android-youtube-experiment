@@ -1,53 +1,50 @@
 package com.google.android.youtube.player
 
-import androidx.fragment.app.FragmentManager
-import androidx.fragment.app.commitNow
+import android.view.LayoutInflater.from
+import android.view.View
+import android.view.ViewGroup
+import androidx.core.view.children
 import app.experiment.youtube.BuildConfig
+import app.experiment.youtube.databinding.WidgetOfficialPlayerViewBinding
+import java.util.concurrent.atomic.AtomicReference
 
-class OfficialYouTubePlayerManager(
-    private val fragmentManager: FragmentManager
-) {
+class OfficialYouTubePlayerManager {
 
-    fun close(id: Int) {
-        val playerFragment = findPlayerFragment()
-        if (playerFragment != null && playerFragment.id == id) {
-            playerFragment.pause()
-        }
+    private val recycledPlayerView = AtomicReference<OfficialYouTubePlayerView>(null)
+
+    fun pause(container: ViewGroup) {
+        val playerView: OfficialYouTubePlayerView? =
+            container.children.firstOrNull() as? OfficialYouTubePlayerView
+        playerView?.isPlayWhenReady = false
     }
 
-    fun open(
-        id: Int,
+    fun play(
+        container: ViewGroup,
         videoId: String,
         autoStart: Boolean = true,
-        playerStyle: YouTubePlayer.PlayerStyle = YouTubePlayer.PlayerStyle.DEFAULT
     ) {
-        val playerFragment = findPlayerFragment() ?: ExperimentYouTubePlayerFragment.newInstance(
-            apiKey = BuildConfig.YT_API_KEY,
-            playerStyle = playerStyle
-        )
+        val playerView: OfficialYouTubePlayerView =
+            container.children.firstOrNull() as? OfficialYouTubePlayerView
+                ?: recycledPlayerView.get()
+                ?: WidgetOfficialPlayerViewBinding.inflate(from(container.context)).root
+                    .also(recycledPlayerView::set)
 
-        if (playerFragment.id != id) {
-            fragmentManager.commitNow(allowStateLoss = true) {
-                remove(playerFragment)
-            }
-            fragmentManager.executePendingTransactions()
-            fragmentManager.commitNow(allowStateLoss = true) {
-                replace(id, playerFragment, YOUTUBE_FRAGMENT_TAG)
-            }
-        }
-
-        if (autoStart) {
-            if (playerFragment.canPlay()) playerFragment.play()
-            else playerFragment.play(videoId)
-        } else {
-            playerFragment.prepare(videoId)
-        }
+        container.ensureChild(playerView)
+        playerView.prepare(BuildConfig.YT_API_KEY, videoId)
+        playerView.isPlayWhenReady = autoStart
     }
 
-    private fun findPlayerFragment(): ExperimentYouTubePlayerFragment? = fragmentManager
-        .findFragmentByTag(YOUTUBE_FRAGMENT_TAG) as? ExperimentYouTubePlayerFragment
-
     private companion object {
-        const val YOUTUBE_FRAGMENT_TAG = "YOUTUBE_FRAGMENT_TAG"
+        private fun View.removeFromParent() {
+            val parent = this.parent as? ViewGroup ?: return
+            parent.removeView(this)
+        }
+
+        fun ViewGroup.ensureChild(view: View) {
+            if (view.parent == this) return
+            view.removeFromParent()
+            removeAllViews()
+            addView(view)
+        }
     }
 }

@@ -4,7 +4,6 @@ import android.os.Bundle
 import app.experiment.youtube.databinding.ActivityOfficialPlayerManyVideosBinding
 import com.google.android.youtube.player.ExperimentYouTubePlayerFragment
 import com.google.android.youtube.player.play
-import com.google.android.youtube.player.prepare
 
 class OfficialYouTubePlayerManyVideosActivity : CommonYouTubeActivity() {
 

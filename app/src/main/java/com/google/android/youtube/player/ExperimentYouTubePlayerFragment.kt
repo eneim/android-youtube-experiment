@@ -62,7 +62,7 @@ class ExperimentYouTubePlayerFragment : Fragment(),
     )
         .also { playerView ->
             provider = InternalPlayerProvider(playerView)
-            val listener = initialData?.listener
+            val listener = initialData?.listener ?: return@also
             initialData = null
             initialize(listener)
         }
@@ -121,21 +121,29 @@ class ExperimentYouTubePlayerFragment : Fragment(),
 
     fun initialize(listener: YouTubePlayer.OnInitializedListener?) {
         val provider = this.provider
-        val playerView = provider?.playerView
-        if (playerView != null) {
-            playerView.a(
-                requireActivity(),
-                provider,
-                apiKey,
-                InternalInitializedListener(listener),
-                playerState
-            )
+        @Suppress("LiftReturnOrAssignment")
+        if (provider != null) {
+            provider.initialize(apiKey, InternalInitializedListener(listener))
             initialData = null
-            playerState = null
         } else {
             initialData = InitialData(listener = listener)
         }
     }
+
+    fun prepare(videoId: String) = initialize(object : YouTubePlayer.OnInitializedListener {
+        override fun onInitializationSuccess(
+            provider: YouTubePlayer.Provider?,
+            player: YouTubePlayer?,
+            isRestored: Boolean
+        ) {
+            if (!isRestored) player?.cueVideo(videoId)
+        }
+
+        override fun onInitializationFailure(
+            provider: YouTubePlayer.Provider?,
+            result: YouTubeInitializationResult?
+        ) = Unit
+    })
 
     //region YouTubePlayer.PlayerStateChangeListener
     override fun onLoading() {
@@ -200,10 +208,11 @@ class ExperimentYouTubePlayerFragment : Fragment(),
                 InternalInitializedListener(listener),
                 playerState,
             )
+            playerState = null
         }
     }
 
-    private inner class InternalInitializedListener(
+    private inner class InternalInitializedListener constructor(
         private val delegate: YouTubePlayer.OnInitializedListener? = null
     ) : YouTubePlayer.OnInitializedListener {
         override fun onInitializationSuccess(
@@ -217,7 +226,7 @@ class ExperimentYouTubePlayerFragment : Fragment(),
                 setPlaybackEventListener(this@ExperimentYouTubePlayerFragment)
                 setShowFullscreenButton(false)
                 setPlayerStyle(playerStyle)
-                setManageAudioFocus(true)
+                // setManageAudioFocus(true)
             }
 
             this@ExperimentYouTubePlayerFragment.player = player
@@ -242,7 +251,7 @@ class ExperimentYouTubePlayerFragment : Fragment(),
 
         fun newInstance(
             apiKey: String,
-            playerStyle: PlayerStyle
+            playerStyle: PlayerStyle = PlayerStyle.DEFAULT,
         ) = ExperimentYouTubePlayerFragment().apply {
             arguments = bundleOf(
                 ARGS_API_KEY to apiKey,
@@ -250,24 +259,6 @@ class ExperimentYouTubePlayerFragment : Fragment(),
             )
         }
     }
-}
-
-// Loads the video without starts playing it.
-fun ExperimentYouTubePlayerFragment.prepare(videoId: String) {
-    initialize(object : YouTubePlayer.OnInitializedListener {
-        override fun onInitializationSuccess(
-            provider: YouTubePlayer.Provider?,
-            player: YouTubePlayer?,
-            isRestored: Boolean
-        ) {
-            if (!isRestored) player?.cueVideo(videoId)
-        }
-
-        override fun onInitializationFailure(
-            provider: YouTubePlayer.Provider?,
-            result: YouTubeInitializationResult?
-        ) = Unit
-    })
 }
 
 // Loads the video and starts playing it as soon as it is loaded

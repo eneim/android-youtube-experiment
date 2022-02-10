@@ -6,9 +6,8 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity"
     >
-  <androidx.fragment.app.FragmentContainerView
-      android:id="@+id/youtube_player_container"
-      android:name="com.google.android.youtube.player.ExperimentYouTubePlayerFragment"
+  <com.google.android.youtube.player.OfficialYouTubePlayerView
+      android:id="@+id/youtube_player"
       android:layout_width="0dp"
       android:layout_height="0dp"
       android:gravity="center"
